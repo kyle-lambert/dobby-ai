@@ -1,11 +1,13 @@
 import { Authenticator, AuthorizationError } from "remix-auth";
 import { sessionStorage } from "~/services/session.server";
 import { FormStrategy } from "remix-auth-form";
+import { GoogleStrategy } from "remix-auth-google";
 import { compare } from "bcryptjs";
 
 import { prisma } from "~/db.server";
 import type { User } from "@prisma/client";
 import { json } from "@remix-run/server-runtime";
+import { environment } from "~/environment.server";
 
 export async function wrapped(authenticate: Promise<User["id"]>) {
   try {
@@ -34,29 +36,40 @@ export let authenticator = new Authenticator<User["id"]>(sessionStorage, {
   throwOnError: true,
 });
 
-authenticator.use(
-  new FormStrategy(async ({ form }) => {
-    const email = form.get("email") as string;
-    const password = form.get("password") as string;
+const formStrategy = new FormStrategy(async ({ form }) => {
+  const email = form.get("email") as string;
+  const password = form.get("password") as string;
 
-    const userWithPassword = await prisma.user.findUnique({
-      where: { email },
-      include: {
-        password: true,
-      },
-    });
+  const userWithPassword = await prisma.user.findUnique({
+    where: { email },
+    include: {
+      password: true,
+    },
+  });
 
-    if (!userWithPassword || !userWithPassword.password) {
-      throw new AuthorizationError("User does not exist.");
-    }
+  if (!userWithPassword || !userWithPassword.password) {
+    throw new AuthorizationError("User does not exist.");
+  }
 
-    const isValid = await compare(password, userWithPassword.password.hash);
+  const isValid = await compare(password, userWithPassword.password.hash);
 
-    if (!isValid) {
-      throw new AuthorizationError("Invalid credentials.");
-    }
+  if (!isValid) {
+    throw new AuthorizationError("Invalid credentials.");
+  }
 
-    return userWithPassword.id;
-  }),
-  FORM_STRATEGY
+  return userWithPassword.id;
+});
+
+const googleStrategy = new GoogleStrategy<User["id"]>(
+  {
+    clientID: environment().GOOGLE_CLIENT_ID,
+    clientSecret: environment().GOOGLE_CLIENT_SECRET,
+    callbackURL: environment().GOOGLE_CALLBACK_URL,
+  },
+  async ({ accessToken, refreshToken, extraParams, profile }) => {
+    return "id";
+  }
 );
+
+authenticator.use(formStrategy, FORM_STRATEGY);
+authenticator.use(googleStrategy, GOOGLE_STRATEGY);

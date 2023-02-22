@@ -1,13 +1,13 @@
+import { useEffect } from "react";
 import { Form, Link, useActionData, useSearchParams } from "@remix-run/react";
 import { z } from "zod";
 import { withZod } from "@remix-validated-form/with-zod";
 import { safeRedirect } from "remix-utils";
+import type { LoaderArgs, ActionArgs } from "@remix-run/server-runtime";
 
 import { wrapped } from "~/services/auth.server";
 import { authenticator, FORM_STRATEGY } from "~/services/auth.server";
 import { validationError } from "remix-validated-form";
-
-import { LoaderArgs, ActionArgs } from "@remix-run/server-runtime";
 
 const validator = withZod(
   z.object({
@@ -17,13 +17,11 @@ const validator = withZod(
   })
 );
 
-const DEFAULT_REDIRECT = "/app";
-
 export async function loader({ request }: LoaderArgs) {
   const redirectTo = new URL(request.url).searchParams.get("redirectTo");
 
   return await authenticator.isAuthenticated(request, {
-    successRedirect: safeRedirect(redirectTo, DEFAULT_REDIRECT),
+    successRedirect: safeRedirect(redirectTo, "/app"),
   });
 }
 
@@ -38,7 +36,7 @@ export async function action({ request }: ActionArgs) {
 
   return await wrapped(
     authenticator.authenticate(FORM_STRATEGY, request, {
-      successRedirect: safeRedirect(redirectTo, DEFAULT_REDIRECT),
+      successRedirect: safeRedirect(redirectTo, "/app"),
     })
   );
 }
@@ -50,9 +48,13 @@ export function useRedirectTo() {
 
 export default function Login() {
   const redirectTo = useRedirectTo();
-  const actionData = useActionData();
+  const actionData = useActionData<typeof action>();
 
-  console.log(actionData);
+  useEffect(() => {
+    if (actionData) {
+      console.log(actionData);
+    }
+  }, [actionData]);
 
   return (
     <div className="flex min-h-full items-center justify-center py-12 px-4 sm:px-6 lg:px-8">

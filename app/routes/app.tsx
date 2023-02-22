@@ -111,7 +111,7 @@ export default function () {
                           ))}
                           <Menu.Item>
                             {({ active }) => (
-                              <Form action="/logout" method="post">
+                              <Form action="/auth/logout" method="post">
                                 <button
                                   type="submit"
                                   className={clsx(
@@ -191,7 +191,7 @@ export default function () {
                       {item.name}
                     </Disclosure.Button>
                   ))}
-                  <Form action="/logout" method="post">
+                  <Form action="/auth/logout" method="post">
                     <button
                       type="submit"
                       className="block w-full rounded-md px-3 py-2 text-left text-base font-medium text-gray-400 hover:bg-gray-700 hover:text-white"

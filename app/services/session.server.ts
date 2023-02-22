@@ -1,7 +1,5 @@
 import { createCookieSessionStorage } from "@remix-run/node";
-import invariant from "tiny-invariant";
-
-invariant(process.env.SESSION_SECRET, "SESSION_SECRET must be set");
+import { environment } from "~/environment.server";
 
 export let sessionStorage = createCookieSessionStorage({
   cookie: {
@@ -9,7 +7,7 @@ export let sessionStorage = createCookieSessionStorage({
     sameSite: "lax",
     path: "/",
     httpOnly: true,
-    secrets: [process.env.SESSION_SECRET],
+    secrets: [environment().SESSION_SECRET],
     secure: process.env.NODE_ENV === "production",
   },
 });
