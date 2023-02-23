@@ -67,21 +67,11 @@ export default function Register() {
             </Link>
           </p>
         </div>
-        <Form
-          className="mt-8 space-y-6"
-          method="post"
-        >
-          <input
-            type="hidden"
-            name="remember"
-            defaultValue="true"
-          />
+        <Form className="mt-8 space-y-6" method="post">
+          <input type="hidden" name="remember" defaultValue="true" />
           <div className="-space-y-px rounded-md shadow-sm">
             <div>
-              <label
-                htmlFor="firstName"
-                className="sr-only"
-              >
+              <label htmlFor="firstName" className="sr-only">
                 First name
               </label>
               <input
@@ -94,10 +84,7 @@ export default function Register() {
               />
             </div>
             <div>
-              <label
-                htmlFor="lastName"
-                className="sr-only"
-              >
+              <label htmlFor="lastName" className="sr-only">
                 Last name
               </label>
               <input
@@ -110,10 +97,7 @@ export default function Register() {
               />
             </div>
             <div>
-              <label
-                htmlFor="email"
-                className="sr-only"
-              >
+              <label htmlFor="email" className="sr-only">
                 Email address
               </label>
               <input
@@ -127,10 +111,7 @@ export default function Register() {
               />
             </div>
             <div>
-              <label
-                htmlFor="password"
-                className="sr-only"
-              >
+              <label htmlFor="password" className="sr-only">
                 Password
               </label>
               <input

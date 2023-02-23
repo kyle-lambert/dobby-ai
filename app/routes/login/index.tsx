@@ -71,16 +71,10 @@ export default function Login() {
             </Link>
           </p>
         </div>
-        <Form
-          className="mt-8 space-y-6"
-          method="post"
-        >
+        <Form className="mt-8 space-y-6" method="post">
           <div className="-space-y-px rounded-md shadow-sm">
             <div>
-              <label
-                htmlFor="email"
-                className="sr-only"
-              >
+              <label htmlFor="email" className="sr-only">
                 Email address
               </label>
               <input
@@ -94,10 +88,7 @@ export default function Login() {
               />
             </div>
             <div>
-              <label
-                htmlFor="password"
-                className="sr-only"
-              >
+              <label htmlFor="password" className="sr-only">
                 Password
               </label>
               <input
