@@ -1,14 +1,14 @@
-import { createCookieSessionStorage } from "@remix-run/node";
-import { environment } from "~/environment.server";
+import { createCookieSessionStorage } from '@remix-run/node';
+import { environment } from '~/environment.server';
 
 export let sessionStorage = createCookieSessionStorage({
   cookie: {
-    name: "__session",
-    sameSite: "lax",
-    path: "/",
+    name: '__session',
+    sameSite: 'lax',
+    path: '/',
     httpOnly: true,
     secrets: [environment().SESSION_SECRET],
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.NODE_ENV === 'production',
   },
 });
 

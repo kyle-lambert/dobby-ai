@@ -1,13 +1,13 @@
-import { useEffect } from "react";
-import { Form, Link, useActionData, useSearchParams } from "@remix-run/react";
-import { z } from "zod";
-import { withZod } from "@remix-validated-form/with-zod";
-import { safeRedirect } from "remix-utils";
-import type { LoaderArgs, ActionArgs } from "@remix-run/server-runtime";
+import { useEffect } from 'react';
+import { Form, Link, useActionData, useSearchParams } from '@remix-run/react';
+import { z } from 'zod';
+import { withZod } from '@remix-validated-form/with-zod';
+import { safeRedirect } from 'remix-utils';
+import type { LoaderArgs, ActionArgs } from '@remix-run/server-runtime';
 
-import { wrapped } from "~/services/auth.server";
-import { authenticator, FORM_STRATEGY } from "~/services/auth.server";
-import { validationError } from "remix-validated-form";
+import { wrapped } from '~/services/auth.server';
+import { authenticator, FORM_STRATEGY } from '~/services/auth.server';
+import { validationError } from 'remix-validated-form';
 
 const validator = withZod(
   z.object({
@@ -17,10 +17,10 @@ const validator = withZod(
 );
 
 export async function loader({ request }: LoaderArgs) {
-  const redirectTo = new URL(request.url).searchParams.get("redirectTo");
+  const redirectTo = new URL(request.url).searchParams.get('redirectTo');
 
   return await authenticator.isAuthenticated(request, {
-    successRedirect: safeRedirect(redirectTo, "/app/tictoc"),
+    successRedirect: safeRedirect(redirectTo, '/app/tictoc'),
   });
 }
 
@@ -31,18 +31,18 @@ export async function action({ request }: ActionArgs) {
     return validationError(result.error);
   }
 
-  const redirectTo = new URL(request.url).searchParams.get("redirectTo");
+  const redirectTo = new URL(request.url).searchParams.get('redirectTo');
 
   return await wrapped(
     authenticator.authenticate(FORM_STRATEGY, request, {
-      successRedirect: safeRedirect(redirectTo, "/app/tictoc"),
+      successRedirect: safeRedirect(redirectTo, '/app/tictoc'),
     })
   );
 }
 
 export function useRedirectTo() {
   const [searchParams] = useSearchParams();
-  return searchParams.get("redirectTo") ?? undefined;
+  return searchParams.get('redirectTo') ?? undefined;
 }
 
 export default function Login() {
@@ -62,7 +62,7 @@ export default function Login() {
             Sign in to your account
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Don't have an account?{" "}
+            Don't have an account?{' '}
             <Link
               to="/register"
               className="font-medium text-indigo-600 hover:text-indigo-500"
@@ -71,10 +71,16 @@ export default function Login() {
             </Link>
           </p>
         </div>
-        <Form className="mt-8 space-y-6" method="post">
+        <Form
+          className="mt-8 space-y-6"
+          method="post"
+        >
           <div className="-space-y-px rounded-md shadow-sm">
             <div>
-              <label htmlFor="email" className="sr-only">
+              <label
+                htmlFor="email"
+                className="sr-only"
+              >
                 Email address
               </label>
               <input
@@ -88,7 +94,10 @@ export default function Login() {
               />
             </div>
             <div>
-              <label htmlFor="password" className="sr-only">
+              <label
+                htmlFor="password"
+                className="sr-only"
+              >
                 Password
               </label>
               <input

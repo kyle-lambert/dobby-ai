@@ -1,11 +1,11 @@
-import { Form, Link, useActionData, useLoaderData } from "@remix-run/react";
-import { ActionArgs, LoaderArgs, redirect } from "@remix-run/server-runtime";
-import { withZod } from "@remix-validated-form/with-zod";
-import { validationError } from "remix-validated-form";
-import { z } from "zod";
-import { createUser } from "~/models/user.server";
-import { authenticator } from "~/services/auth.server";
-import { commitSession, getSession } from "~/services/session.server";
+import { Form, Link, useActionData, useLoaderData } from '@remix-run/react';
+import { ActionArgs, LoaderArgs, redirect } from '@remix-run/server-runtime';
+import { withZod } from '@remix-validated-form/with-zod';
+import { validationError } from 'remix-validated-form';
+import { z } from 'zod';
+import { createUser } from '~/models/user.server';
+import { authenticator } from '~/services/auth.server';
+import { commitSession, getSession } from '~/services/session.server';
 
 const validator = withZod(
   z.object({
@@ -18,7 +18,7 @@ const validator = withZod(
 
 export async function loader({ request }: LoaderArgs) {
   return await authenticator.isAuthenticated(request, {
-    successRedirect: "/app/tictoc",
+    successRedirect: '/app/tictoc',
   });
 }
 
@@ -32,13 +32,13 @@ export async function action({ request }: ActionArgs) {
   const { firstName, lastName, email, password } = result.data;
 
   const user = await createUser(firstName, lastName, email, password);
-  const session = await getSession(request.headers.get("Cookie"));
+  const session = await getSession(request.headers.get('Cookie'));
 
   session.set(authenticator.sessionKey, user.id);
 
-  return redirect("/app/tictoc", {
+  return redirect('/app/tictoc', {
     headers: {
-      "Set-Cookie": await commitSession(session),
+      'Set-Cookie': await commitSession(session),
     },
   });
 }
@@ -47,8 +47,8 @@ export default function Register() {
   const loaderData = useLoaderData();
   const actionData = useActionData();
 
-  console.log("loader data", loaderData);
-  console.log("action data", actionData);
+  console.log('loader data', loaderData);
+  console.log('action data', actionData);
 
   return (
     <div className="flex min-h-full items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -58,7 +58,7 @@ export default function Register() {
             Create your account
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Already registered?{" "}
+            Already registered?{' '}
             <Link
               to="/login"
               className="font-medium text-indigo-600 hover:text-indigo-500"
@@ -67,11 +67,21 @@ export default function Register() {
             </Link>
           </p>
         </div>
-        <Form className="mt-8 space-y-6" method="post">
-          <input type="hidden" name="remember" defaultValue="true" />
+        <Form
+          className="mt-8 space-y-6"
+          method="post"
+        >
+          <input
+            type="hidden"
+            name="remember"
+            defaultValue="true"
+          />
           <div className="-space-y-px rounded-md shadow-sm">
             <div>
-              <label htmlFor="firstName" className="sr-only">
+              <label
+                htmlFor="firstName"
+                className="sr-only"
+              >
                 First name
               </label>
               <input
@@ -84,7 +94,10 @@ export default function Register() {
               />
             </div>
             <div>
-              <label htmlFor="lastName" className="sr-only">
+              <label
+                htmlFor="lastName"
+                className="sr-only"
+              >
                 Last name
               </label>
               <input
@@ -97,7 +110,10 @@ export default function Register() {
               />
             </div>
             <div>
-              <label htmlFor="email" className="sr-only">
+              <label
+                htmlFor="email"
+                className="sr-only"
+              >
                 Email address
               </label>
               <input
@@ -111,7 +127,10 @@ export default function Register() {
               />
             </div>
             <div>
-              <label htmlFor="password" className="sr-only">
+              <label
+                htmlFor="password"
+                className="sr-only"
+              >
                 Password
               </label>
               <input

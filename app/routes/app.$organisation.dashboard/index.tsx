@@ -1,6 +1,6 @@
-import type { LoaderArgs } from "@remix-run/server-runtime";
-import { authenticator } from "~/services/auth.server";
-import { getRedirectParams } from "~/utils";
+import type { LoaderArgs } from '@remix-run/server-runtime';
+import { authenticator } from '~/services/auth.server';
+import { getRedirectParams } from '~/utils';
 
 export async function loader({ request }: LoaderArgs) {
   const searchParams = getRedirectParams(request);

@@ -1,4 +1,4 @@
-import { Link } from "@remix-run/react";
+import { Link } from '@remix-run/react';
 
 export default function Index() {
   return (
@@ -14,7 +14,10 @@ export default function Index() {
           >
             Login to your account
           </Link>
-          <Link to="/register" className="text-sm font-semibold text-gray-900">
+          <Link
+            to="/register"
+            className="text-sm font-semibold text-gray-900"
+          >
             Create an account
           </Link>
         </div>

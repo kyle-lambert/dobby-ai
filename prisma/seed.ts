@@ -1,35 +1,35 @@
-import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcryptjs";
+import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
 const users = [
   {
-    firstName: "Kyle",
-    lastName: "Lambert",
-    email: "kyle@gmail.com",
+    firstName: 'Kyle',
+    lastName: 'Lambert',
+    email: 'kyle@gmail.com',
   },
   {
-    firstName: "Troy",
-    lastName: "Lambert",
-    email: "troy@gmail.com",
+    firstName: 'Troy',
+    lastName: 'Lambert',
+    email: 'troy@gmail.com',
   },
   {
-    firstName: "George",
-    lastName: "Magnisalis",
-    email: "george@gmail.com",
+    firstName: 'George',
+    lastName: 'Magnisalis',
+    email: 'george@gmail.com',
   },
   {
-    firstName: "Jay",
-    lastName: "Donjerkovic",
-    email: "jay@gmail.com",
+    firstName: 'Jay',
+    lastName: 'Donjerkovic',
+    email: 'jay@gmail.com',
   },
 ];
 
 async function seed() {
   await prisma.user.deleteMany();
 
-  const hashedPassword = await bcrypt.hash("test", 10);
+  const hashedPassword = await bcrypt.hash('test', 10);
 
   await Promise.all(
     users.map(async ({ firstName, lastName, email }) => {
