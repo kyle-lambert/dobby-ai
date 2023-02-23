@@ -25,7 +25,7 @@ const navigation = [
 ];
 const userNavigation = [{ name: "Settings", to: "./settings" }];
 
-export default function () {
+export default function App() {
   const data = useLoaderData<typeof loader>();
 
   useEffect(() => {

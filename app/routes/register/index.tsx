@@ -7,12 +7,6 @@ import { createUser } from "~/models/user.server";
 import { authenticator } from "~/services/auth.server";
 import { commitSession, getSession } from "~/services/session.server";
 
-export async function loader({ request }: LoaderArgs) {
-  return await authenticator.isAuthenticated(request, {
-    successRedirect: "/app",
-  });
-}
-
 const validator = withZod(
   z.object({
     firstName: z.string().min(1).trim(),
@@ -21,6 +15,12 @@ const validator = withZod(
     password: z.string().min(1).trim(),
   })
 );
+
+export async function loader({ request }: LoaderArgs) {
+  return await authenticator.isAuthenticated(request, {
+    successRedirect: "/app/tictoc",
+  });
+}
 
 export async function action({ request }: ActionArgs) {
   const result = await validator.validate(await request.clone().formData());
@@ -36,7 +36,7 @@ export async function action({ request }: ActionArgs) {
 
   session.set(authenticator.sessionKey, user.id);
 
-  return redirect("/app", {
+  return redirect("/app/tictoc", {
     headers: {
       "Set-Cookie": await commitSession(session),
     },

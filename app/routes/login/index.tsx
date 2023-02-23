@@ -20,7 +20,7 @@ export async function loader({ request }: LoaderArgs) {
   const redirectTo = new URL(request.url).searchParams.get("redirectTo");
 
   return await authenticator.isAuthenticated(request, {
-    successRedirect: safeRedirect(redirectTo, "/app"),
+    successRedirect: safeRedirect(redirectTo, "/app/tictoc"),
   });
 }
 
@@ -35,7 +35,7 @@ export async function action({ request }: ActionArgs) {
 
   return await wrapped(
     authenticator.authenticate(FORM_STRATEGY, request, {
-      successRedirect: safeRedirect(redirectTo, "/app"),
+      successRedirect: safeRedirect(redirectTo, "/app/tictoc"),
     })
   );
 }
