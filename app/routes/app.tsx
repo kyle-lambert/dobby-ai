@@ -19,7 +19,10 @@ export async function loader({ request }: LoaderArgs) {
   return json({ user: await getUserById(id) });
 }
 
-const navigation = [{ name: "Dashboard", to: "./dashboard", current: true }];
+const navigation = [
+  { name: "Dashboard", to: "./dashboard" },
+  { name: "Settings", to: "./settings" },
+];
 const userNavigation = [{ name: "Settings", to: "./settings" }];
 
 export default function () {
@@ -40,11 +43,13 @@ export default function () {
               <div className="flex h-16 items-center justify-between">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    <img
-                      className="h-8 w-8"
-                      src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=500"
-                      alt="Your Company"
-                    />
+                    <Link to=".">
+                      <img
+                        className="h-8 w-8"
+                        src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=500"
+                        alt="Your Company"
+                      />
+                    </Link>
                   </div>
                   <div className="hidden md:block">
                     <div className="ml-10 flex items-baseline space-x-4">
@@ -52,13 +57,7 @@ export default function () {
                         <Link
                           key={item.name}
                           to={item.to}
-                          className={clsx(
-                            item.current
-                              ? "bg-gray-900 text-white"
-                              : "text-gray-300 hover:bg-gray-700 hover:text-white",
-                            "rounded-md px-3 py-2 text-sm font-medium"
-                          )}
-                          aria-current={item.current ? "page" : undefined}
+                          className="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
                         >
                           {item.name}
                         </Link>
@@ -150,13 +149,7 @@ export default function () {
                     key={item.name}
                     as={Link}
                     to={item.to}
-                    className={clsx(
-                      item.current
-                        ? "bg-gray-900 text-white"
-                        : "text-gray-300 hover:bg-gray-700 hover:text-white",
-                      "block rounded-md px-3 py-2 text-base font-medium"
-                    )}
-                    aria-current={item.current ? "page" : undefined}
+                    className="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
                   >
                     {item.name}
                   </Disclosure.Button>
