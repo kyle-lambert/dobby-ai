@@ -13,7 +13,6 @@ const validator = withZod(
   z.object({
     email: z.string().email().trim(),
     password: z.string().min(1).trim(),
-    redirectTo: z.string(),
   })
 );
 
@@ -47,7 +46,6 @@ export function useRedirectTo() {
 }
 
 export default function Login() {
-  const redirectTo = useRedirectTo();
   const actionData = useActionData<typeof action>();
 
   useEffect(() => {
@@ -105,7 +103,7 @@ export default function Login() {
             </div>
           </div>
 
-          <input type="hidden" name="redirectTo" value={redirectTo} />
+          {/* <input type="hidden" name="redirectTo" value={redirectTo} /> */}
 
           <div>
             <button
