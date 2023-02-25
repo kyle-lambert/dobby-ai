@@ -14,7 +14,7 @@ import { validationError } from 'remix-validated-form';
 import { AuthorizationError } from 'remix-auth';
 import { commitSession, getSession } from '~/services/session.server';
 import { prisma } from '~/db.server';
-import { httpStatus } from '~/utils/errors';
+import { httpStatus, HttpStatusCode, jsonHttpError } from '~/utils/errors';
 
 const validator = withZod(
   z.object({
@@ -84,8 +84,6 @@ export async function action({ request }: ActionArgs) {
       'Set-Cookie': await commitSession(session),
     };
 
-    console.log(JSON.stringify(user, null, 4));
-
     if (user?.organisations && user.organisations.length > 0) {
       const organisationId = user.organisations[0].organisationId;
       return redirect(
@@ -102,11 +100,19 @@ export async function action({ request }: ActionArgs) {
       return error;
     }
     if (error instanceof AuthorizationError) {
-      const message = error.message || httpStatus[403];
-      return json({ error: message }, 403);
+      switch (error.message) {
+        case '401': {
+          return jsonHttpError(401, 'Invalid credentials');
+        }
+        case '404': {
+          return jsonHttpError(404, 'User not found');
+        }
+        default: {
+          return jsonHttpError(401, 'Authorisation error');
+        }
+      }
     }
-
-    return json({ error: httpStatus[500] }, 500);
+    return jsonHttpError(500);
   }
 }
 

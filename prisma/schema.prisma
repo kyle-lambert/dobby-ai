@@ -34,9 +34,9 @@ model UserOrganisation {
 }
 
 model Organisation {
-  id               String             @id @default(cuid())
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
-  organisationName String
-  users            UserOrganisation[]
+  id        String             @id @default(cuid())
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  name      String
+  users     UserOrganisation[]
 }

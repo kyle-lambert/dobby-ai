@@ -17,6 +17,7 @@ import { z } from 'zod';
 import { prisma } from '~/db.server';
 import { authenticator, hashPassword } from '~/services/auth.server';
 import { commitSession, getSession } from '~/services/session.server';
+import { jsonHttpError } from '~/utils/errors';
 
 const validator = withZod(
   z.object({
@@ -51,7 +52,7 @@ export async function action({ request }: ActionArgs) {
   });
 
   if (userFound) {
-    return json({ error: 'User already exists' }, 409);
+    return jsonHttpError(409, 'User already exists');
   }
 
   const user = await prisma.user.create({
@@ -69,7 +70,7 @@ export async function action({ request }: ActionArgs) {
 
   const organisation = await prisma.organisation.create({
     data: {
-      organisationName,
+      name: organisationName,
       users: {
         create: {
           user: {

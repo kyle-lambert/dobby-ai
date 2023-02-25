@@ -59,7 +59,7 @@ const formStrategy = new FormStrategy(async ({ form }) => {
   });
 
   if (!userWithPassword || !userWithPassword.password) {
-    throw new AuthorizationError('User does not exist');
+    throw new AuthorizationError('404');
   }
 
   const isValid = await comparePassword(
@@ -68,7 +68,7 @@ const formStrategy = new FormStrategy(async ({ form }) => {
   );
 
   if (!isValid) {
-    throw new AuthorizationError('Invalid credentials');
+    throw new AuthorizationError('401');
   }
 
   return userWithPassword.id;

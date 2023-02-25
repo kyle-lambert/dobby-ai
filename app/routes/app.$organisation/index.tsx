@@ -1,6 +1,13 @@
 import { Fragment, useEffect } from 'react';
 import { Disclosure, Menu, Transition } from '@headlessui/react';
-import { Form, Link, Outlet, useCatch, useLoaderData } from '@remix-run/react';
+import {
+  Form,
+  Link,
+  Outlet,
+  ThrownResponse,
+  useCatch,
+  useLoaderData,
+} from '@remix-run/react';
 import { json, LoaderArgs } from '@remix-run/server-runtime';
 import clsx from 'clsx';
 import { authenticator } from '~/services/auth.server';
@@ -8,8 +15,14 @@ import { authenticator } from '~/services/auth.server';
 import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { getRedirectParams } from '~/utils';
 import { prisma } from '~/db.server';
-import { httpStatus } from '~/utils/errors';
+import {
+  httpStatus,
+  HttpStatusCode,
+  HttpStatusName,
+  jsonHttpError,
+} from '~/utils/errors';
 import { Request } from '@remix-run/node';
+import { Organisation, User } from '@prisma/client';
 
 // export async function authenticated(request: Request) {
 //   const searchParams = getRedirectParams(request);
@@ -18,18 +31,11 @@ import { Request } from '@remix-run/node';
 //   });
 // }
 
-export async function loader({ request, params }: LoaderArgs) {
-  // const searchParams = getRedirectParams(request);
-  // const userId = await authenticator.isAuthenticated(request, {
-  //   failureRedirect: `/login?${searchParams}`,
-  // });
-  const userId = await authenticator.isAuthenticated(request, {
-    failureRedirect: `/login`,
-  });
-
-  const organisationId = params.organisation as string;
-
-  const userOrganisation = await prisma.userOrganisation.findUnique({
+export async function findUserOrganisation(
+  userId: User['id'],
+  organisationId: Organisation['id']
+) {
+  return await prisma.userOrganisation.findUnique({
     where: {
       userId_organisationId: {
         userId,
@@ -49,15 +55,28 @@ export async function loader({ request, params }: LoaderArgs) {
       organisation: true,
     },
   });
+}
+
+export async function loader({ request, params }: LoaderArgs) {
+  // const searchParams = getRedirectParams(request);
+  // const userId = await authenticator.isAuthenticated(request, {
+  //   failureRedirect: `/login?${searchParams}`,
+  // });
+  const userId = await authenticator.isAuthenticated(request, {
+    failureRedirect: `/login`,
+  });
+
+  const organisationId = params.organisation as string;
+
+  const userOrganisation = await findUserOrganisation(userId, organisationId);
 
   if (!userOrganisation) {
-    throw json({ error: 'User does not belong to this organisation' }, 403);
+    throw jsonHttpError(403, 'User does not belong to this organisation');
   }
 
   return json({
     user: userOrganisation.user,
-    organistion: userOrganisation.organisation,
-    organisations: userOrganisation.user.organisations,
+    organisation: userOrganisation.organisation,
   });
 }
 
@@ -245,19 +264,35 @@ export default function App() {
   );
 }
 
+export type CatchJsonHttpError = {
+  error: {
+    code: HttpStatusCode;
+    name: HttpStatusName;
+    message: string | null;
+  };
+};
+
 export function CatchBoundary() {
-  const { status, data } = useCatch();
-  const statusName = httpStatus[status as keyof typeof httpStatus];
+  const { status, data } = useCatch() as ThrownResponse<
+    number,
+    CatchJsonHttpError
+  >;
+  const error = data?.error;
+
   return (
     <main className="grid min-h-full place-items-center bg-white py-24 px-6 sm:py-32 lg:px-8">
       <div className="text-center">
         <p className="text-base font-semibold text-rose-600">{status}</p>
-        {statusName && (
+        {error?.name && (
           <h1 className="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl">
-            {statusName}
+            {error.name}
           </h1>
         )}
-        <p className="mt-6 text-base leading-7 text-gray-600">{data.error}</p>
+        {error?.message && (
+          <p className="mt-6 text-base leading-7 text-gray-600">
+            {error.message}
+          </p>
+        )}
       </div>
     </main>
   );

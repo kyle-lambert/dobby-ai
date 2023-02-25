@@ -30,15 +30,6 @@ const users = [
   },
 ];
 
-// const organisations = [
-//   {
-//     organisationName: 'Ez Solutions',
-//   },
-//   {
-//     organisationName: 'Petes Golf',
-//   },
-// ];
-
 async function seed() {
   await prisma.user.deleteMany();
   await prisma.organisation.deleteMany();
@@ -61,7 +52,7 @@ async function seed() {
             create: {
               organisation: {
                 create: {
-                  organisationName,
+                  name: organisationName,
                 },
               },
             },
@@ -70,16 +61,6 @@ async function seed() {
       });
     })
   );
-
-  // await Promise.all(
-  //   organisations.map(async ({ organisationName }) => {
-  //     return await prisma.organisation.create({
-  //       data: {
-  //         organisationName,
-  //       },
-  //     });
-  //   })
-  // );
 }
 
 seed()
