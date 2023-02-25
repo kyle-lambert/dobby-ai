@@ -8,31 +8,45 @@ const users = [
     firstName: 'Kyle',
     lastName: 'Lambert',
     email: 'kyle@gmail.com',
+    organisationName: 'Billy Baxters',
   },
   {
     firstName: 'Troy',
     lastName: 'Lambert',
     email: 'troy@gmail.com',
+    organisationName: 'Grange Golf Club',
   },
   {
     firstName: 'George',
     lastName: 'Magnisalis',
     email: 'george@gmail.com',
+    organisationName: 'Cafe Primo',
   },
   {
     firstName: 'Jay',
     lastName: 'Donjerkovic',
     email: 'jay@gmail.com',
+    organisationName: 'EZY Electrical',
   },
 ];
 
+// const organisations = [
+//   {
+//     organisationName: 'Ez Solutions',
+//   },
+//   {
+//     organisationName: 'Petes Golf',
+//   },
+// ];
+
 async function seed() {
   await prisma.user.deleteMany();
+  await prisma.organisation.deleteMany();
 
   const hashedPassword = await bcrypt.hash('test', 10);
 
   await Promise.all(
-    users.map(async ({ firstName, lastName, email }) => {
+    users.map(async ({ firstName, lastName, email, organisationName }) => {
       return await prisma.user.create({
         data: {
           firstName,
@@ -43,10 +57,29 @@ async function seed() {
               hash: hashedPassword,
             },
           },
+          organisations: {
+            create: {
+              organisation: {
+                create: {
+                  organisationName,
+                },
+              },
+            },
+          },
         },
       });
     })
   );
+
+  // await Promise.all(
+  //   organisations.map(async ({ organisationName }) => {
+  //     return await prisma.organisation.create({
+  //       data: {
+  //         organisationName,
+  //       },
+  //     });
+  //   })
+  // );
 }
 
 seed()

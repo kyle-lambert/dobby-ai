@@ -3,10 +3,12 @@ import { authenticator } from '~/services/auth.server';
 import { getRedirectParams } from '~/utils';
 
 export async function loader({ request }: LoaderArgs) {
-  const searchParams = getRedirectParams(request);
-
+  // const searchParams = getRedirectParams(request);
+  // const userId = await authenticator.isAuthenticated(request, {
+  //   failureRedirect: `/login?${searchParams}`,
+  // });
   return await authenticator.isAuthenticated(request, {
-    failureRedirect: `/login?${searchParams}`,
+    failureRedirect: `/login`,
   });
 }
 

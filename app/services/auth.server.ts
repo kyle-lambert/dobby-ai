@@ -2,12 +2,23 @@ import { Authenticator, AuthorizationError } from 'remix-auth';
 import { sessionStorage } from '~/services/session.server';
 import { FormStrategy } from 'remix-auth-form';
 import { GoogleStrategy } from 'remix-auth-google';
-import { compare } from 'bcryptjs';
+import { compare, hash } from 'bcryptjs';
 
 import { prisma } from '~/db.server';
-import type { User } from '@prisma/client';
+import type { Password, User } from '@prisma/client';
 import { json } from '@remix-run/server-runtime';
 import { environment } from '~/environment.server';
+import { httpStatus } from '~/utils/errors';
+
+export async function hashPassword(password: string) {
+  return await hash(password, 10);
+}
+export async function comparePassword(
+  password: string,
+  hash: Password['hash']
+) {
+  return await compare(password, hash);
+}
 
 export async function wrapped(authenticate: Promise<User['id']>) {
   try {
@@ -21,11 +32,11 @@ export async function wrapped(authenticate: Promise<User['id']>) {
       return error;
     }
     if (error instanceof AuthorizationError) {
-      const message = error.message || 'Authorization error.';
+      const message = error.message || httpStatus[403];
       return json({ error: message }, 403);
     }
 
-    return json({ error: 'Server error.' }, 500);
+    return json({ error: httpStatus[500] }, 500);
   }
 }
 
@@ -48,13 +59,16 @@ const formStrategy = new FormStrategy(async ({ form }) => {
   });
 
   if (!userWithPassword || !userWithPassword.password) {
-    throw new AuthorizationError('User does not exist.');
+    throw new AuthorizationError('User does not exist');
   }
 
-  const isValid = await compare(password, userWithPassword.password.hash);
+  const isValid = await comparePassword(
+    password,
+    userWithPassword.password.hash
+  );
 
   if (!isValid) {
-    throw new AuthorizationError('Invalid credentials.');
+    throw new AuthorizationError('Invalid credentials');
   }
 
   return userWithPassword.id;

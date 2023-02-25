@@ -1,14 +1,26 @@
-import { Form, Link, useActionData, useLoaderData } from '@remix-run/react';
-import { ActionArgs, LoaderArgs, redirect } from '@remix-run/server-runtime';
+import {
+  Form,
+  Link,
+  useActionData,
+  useCatch,
+  useLoaderData,
+} from '@remix-run/react';
+import {
+  ActionArgs,
+  json,
+  LoaderArgs,
+  redirect,
+} from '@remix-run/server-runtime';
 import { withZod } from '@remix-validated-form/with-zod';
 import { validationError } from 'remix-validated-form';
 import { z } from 'zod';
-import { createUser } from '~/models/user.server';
-import { authenticator } from '~/services/auth.server';
+import { prisma } from '~/db.server';
+import { authenticator, hashPassword } from '~/services/auth.server';
 import { commitSession, getSession } from '~/services/session.server';
 
 const validator = withZod(
   z.object({
+    organisationName: z.string().min(1).trim(),
     firstName: z.string().min(1).trim(),
     lastName: z.string().min(1).trim(),
     email: z.string().email(),
@@ -29,14 +41,51 @@ export async function action({ request }: ActionArgs) {
     return validationError(result.error);
   }
 
-  const { firstName, lastName, email, password } = result.data;
+  const { organisationName, firstName, lastName, email, password } =
+    result.data;
 
-  const user = await createUser(firstName, lastName, email, password);
+  const userFound = await prisma.user.findUnique({
+    where: {
+      email,
+    },
+  });
+
+  if (userFound) {
+    return json({ error: 'User already exists' }, 409);
+  }
+
+  const user = await prisma.user.create({
+    data: {
+      firstName,
+      lastName,
+      email,
+      password: {
+        create: {
+          hash: await hashPassword(password),
+        },
+      },
+    },
+  });
+
+  const organisation = await prisma.organisation.create({
+    data: {
+      organisationName,
+      users: {
+        create: {
+          user: {
+            connect: {
+              id: user.id,
+            },
+          },
+        },
+      },
+    },
+  });
+
   const session = await getSession(request.headers.get('Cookie'));
-
   session.set(authenticator.sessionKey, user.id);
 
-  return redirect('/app/tictoc', {
+  return redirect(`/app/${organisation.id}/dashboard`, {
     headers: {
       'Set-Cookie': await commitSession(session),
     },
@@ -69,6 +118,21 @@ export default function Register() {
         </div>
         <Form className="mt-8 space-y-6" method="post">
           <input type="hidden" name="remember" defaultValue="true" />
+          <div className="-space-y-px rounded-md shadow-sm">
+            <div>
+              <label htmlFor="organisationName" className="sr-only">
+                Organisation name
+              </label>
+              <input
+                id="organisationName"
+                name="organisationName"
+                type="text"
+                required
+                className="relative block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+                placeholder="Organisation name"
+              />
+            </div>
+          </div>
           <div className="-space-y-px rounded-md shadow-sm">
             <div>
               <label htmlFor="firstName" className="sr-only">
@@ -119,7 +183,7 @@ export default function Register() {
                 name="password"
                 type="password"
                 autoComplete="current-password"
-                // required
+                required
                 className="relative block w-full appearance-none rounded-none rounded-b-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
                 placeholder="Password"
               />
@@ -136,6 +200,20 @@ export default function Register() {
           </div>
         </Form>
       </div>
+    </div>
+  );
+}
+
+export function CatchBoundary() {
+  const caught = useCatch();
+
+  return (
+    <div>
+      <h1>Caught</h1>
+      <p>Status: {caught.status}</p>
+      <pre>
+        <code>{JSON.stringify(caught.data, null, 2)}</code>
+      </pre>
     </div>
   );
 }

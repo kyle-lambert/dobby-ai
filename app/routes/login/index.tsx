@@ -1,13 +1,20 @@
-import { useEffect } from 'react';
-import { Form, Link, useActionData, useSearchParams } from '@remix-run/react';
+import { Form, Link, useActionData, useLoaderData } from '@remix-run/react';
 import { z } from 'zod';
 import { withZod } from '@remix-validated-form/with-zod';
 import { safeRedirect } from 'remix-utils';
-import type { LoaderArgs, ActionArgs } from '@remix-run/server-runtime';
+import {
+  LoaderArgs,
+  ActionArgs,
+  json,
+  redirect,
+} from '@remix-run/server-runtime';
 
-import { wrapped } from '~/services/auth.server';
 import { authenticator, FORM_STRATEGY } from '~/services/auth.server';
 import { validationError } from 'remix-validated-form';
+import { AuthorizationError } from 'remix-auth';
+import { commitSession, getSession } from '~/services/session.server';
+import { prisma } from '~/db.server';
+import { httpStatus } from '~/utils/errors';
 
 const validator = withZod(
   z.object({
@@ -19,9 +26,30 @@ const validator = withZod(
 export async function loader({ request }: LoaderArgs) {
   const redirectTo = new URL(request.url).searchParams.get('redirectTo');
 
-  return await authenticator.isAuthenticated(request, {
-    successRedirect: safeRedirect(redirectTo, '/app/tictoc'),
-  });
+  const userId = await authenticator.isAuthenticated(request);
+
+  if (userId) {
+    const organisations = await prisma.organisation.findMany({
+      where: {
+        users: {
+          every: {
+            userId,
+          },
+        },
+      },
+    });
+
+    if (organisations.length > 0) {
+      const organisation = organisations[0];
+      return redirect(
+        safeRedirect(redirectTo, `/app/${organisation.id}/dashboard`)
+      );
+    }
+
+    return redirect(safeRedirect(redirectTo, '/app/create'));
+  }
+
+  return json({});
 }
 
 export async function action({ request }: ActionArgs) {
@@ -33,26 +61,61 @@ export async function action({ request }: ActionArgs) {
 
   const redirectTo = new URL(request.url).searchParams.get('redirectTo');
 
-  return await wrapped(
-    authenticator.authenticate(FORM_STRATEGY, request, {
-      successRedirect: safeRedirect(redirectTo, '/app/tictoc'),
-    })
-  );
-}
+  try {
+    const userId = await authenticator.authenticate(FORM_STRATEGY, request, {});
 
-export function useRedirectTo() {
-  const [searchParams] = useSearchParams();
-  return searchParams.get('redirectTo') ?? undefined;
+    const session = await getSession(request.headers.get('Cookie'));
+    session.set(authenticator.sessionKey, userId);
+
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      include: {
+        organisations: {
+          include: {
+            organisation: true,
+          },
+        },
+      },
+    });
+
+    const headers = {
+      'Set-Cookie': await commitSession(session),
+    };
+
+    console.log(JSON.stringify(user, null, 4));
+
+    if (user?.organisations && user.organisations.length > 0) {
+      const organisationId = user.organisations[0].organisationId;
+      return redirect(
+        safeRedirect(redirectTo, `/app/${organisationId}/dashboard`),
+        { headers }
+      );
+    }
+
+    return redirect(safeRedirect(redirectTo, '/app/create'), {
+      headers,
+    });
+  } catch (error) {
+    if (error instanceof Response) {
+      return error;
+    }
+    if (error instanceof AuthorizationError) {
+      const message = error.message || httpStatus[403];
+      return json({ error: message }, 403);
+    }
+
+    return json({ error: httpStatus[500] }, 500);
+  }
 }
 
 export default function Login() {
   const actionData = useActionData<typeof action>();
+  const loaderData = useLoaderData<typeof loader>();
 
-  useEffect(() => {
-    if (actionData) {
-      console.log(actionData);
-    }
-  }, [actionData]);
+  console.log('loaderData', loaderData);
+  console.log('actionData', actionData);
 
   return (
     <div className="flex min-h-full items-center justify-center py-12 px-4 sm:px-6 lg:px-8">

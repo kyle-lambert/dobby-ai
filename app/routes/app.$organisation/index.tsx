@@ -1,22 +1,64 @@
 import { Fragment, useEffect } from 'react';
 import { Disclosure, Menu, Transition } from '@headlessui/react';
-import { Form, Link, Outlet, useLoaderData } from '@remix-run/react';
+import { Form, Link, Outlet, useCatch, useLoaderData } from '@remix-run/react';
 import { json, LoaderArgs } from '@remix-run/server-runtime';
 import clsx from 'clsx';
 import { authenticator } from '~/services/auth.server';
 
 import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { getRedirectParams } from '~/utils';
-import { getUserById } from '~/models/user.server';
+import { prisma } from '~/db.server';
+import { httpStatus } from '~/utils/errors';
+import { Request } from '@remix-run/node';
 
-export async function loader({ request }: LoaderArgs) {
-  const searchParams = getRedirectParams(request);
+// export async function authenticated(request: Request) {
+//   const searchParams = getRedirectParams(request);
+//   const userId = await authenticator.isAuthenticated(request, {
+//     failureRedirect: `/login?${searchParams}`,
+//   });
+// }
 
-  const id = await authenticator.isAuthenticated(request, {
-    failureRedirect: `/login?${searchParams}`,
+export async function loader({ request, params }: LoaderArgs) {
+  // const searchParams = getRedirectParams(request);
+  // const userId = await authenticator.isAuthenticated(request, {
+  //   failureRedirect: `/login?${searchParams}`,
+  // });
+  const userId = await authenticator.isAuthenticated(request, {
+    failureRedirect: `/login`,
   });
 
-  return json({ user: await getUserById(id) });
+  const organisationId = params.organisation as string;
+
+  const userOrganisation = await prisma.userOrganisation.findUnique({
+    where: {
+      userId_organisationId: {
+        userId,
+        organisationId,
+      },
+    },
+    include: {
+      user: {
+        include: {
+          organisations: {
+            include: {
+              organisation: true,
+            },
+          },
+        },
+      },
+      organisation: true,
+    },
+  });
+
+  if (!userOrganisation) {
+    throw json({ error: 'User does not belong to this organisation' }, 403);
+  }
+
+  return json({
+    user: userOrganisation.user,
+    organistion: userOrganisation.organisation,
+    organisations: userOrganisation.user.organisations,
+  });
 }
 
 const navigation = [
@@ -29,10 +71,10 @@ export default function App() {
   const data = useLoaderData<typeof loader>();
 
   useEffect(() => {
-    if (data.user) {
-      console.log(data.user);
+    if (data) {
+      console.log(data);
     }
-  }, [data.user]);
+  }, [data]);
 
   return (
     <div className="min-h-full">
@@ -198,8 +240,25 @@ export default function App() {
           </>
         )}
       </Disclosure>
-
       <Outlet />
     </div>
+  );
+}
+
+export function CatchBoundary() {
+  const { status, data } = useCatch();
+  const statusName = httpStatus[status as keyof typeof httpStatus];
+  return (
+    <main className="grid min-h-full place-items-center bg-white py-24 px-6 sm:py-32 lg:px-8">
+      <div className="text-center">
+        <p className="text-base font-semibold text-rose-600">{status}</p>
+        {statusName && (
+          <h1 className="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl">
+            {statusName}
+          </h1>
+        )}
+        <p className="mt-6 text-base leading-7 text-gray-600">{data.error}</p>
+      </div>
+    </main>
   );
 }
