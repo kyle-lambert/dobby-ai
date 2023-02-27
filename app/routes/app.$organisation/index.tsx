@@ -13,18 +13,20 @@ import clsx from 'clsx';
 import { authenticator } from '~/services/auth.server';
 
 import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import {
-  HttpStatusCode,
-  HttpReasonPhrase,
-  jsonHttpResponse,
-  JsonHttpResponse,
-} from '~/utils';
+import { jsonHttpResponse, JsonHttpResponse } from '~/utils';
 import { findUserOrganisationByIds } from '~/models/user-organisation.server';
+import { findUserById } from '~/models/user.server';
 
-export async function authenticated(request: Request) {
-  return await authenticator.isAuthenticated(request, {
+export async function requireAuthenticatedUser(request: Request) {
+  /**
+   * Add redirectTo logic here to get searchParams from request.url
+   * and append to failureRedirect path
+   */
+  const userId = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
+
+  return await findUserById(userId);
 }
 
 export async function loader({ request, params }: LoaderArgs) {

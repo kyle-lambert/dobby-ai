@@ -5,7 +5,7 @@ export async function findOrganisationsByUserId(userId: User['id']) {
   return await prisma.organisation.findMany({
     where: {
       users: {
-        every: {
+        some: {
           user: {
             id: userId,
           },

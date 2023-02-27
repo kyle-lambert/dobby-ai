@@ -1,5 +1,6 @@
 import { Link, useLoaderData } from '@remix-run/react';
-import { json, LoaderArgs } from '@remix-run/server-runtime';
+import { json, LoaderArgs, redirect } from '@remix-run/server-runtime';
+import { findOrganisationsByUserId } from '~/models/organisation.server';
 import { findUserById } from '~/models/user.server';
 import { authenticator } from '~/services/auth.server';
 
@@ -8,10 +9,14 @@ export async function loader({ request }: LoaderArgs) {
     failureRedirect: '/login',
   });
 
-  const user = await findUserById(userId);
-  const organisations = user?.organisations
-    ? user?.organisations.map((organisation) => organisation.organisation)
-    : [];
+  const [user, organisations] = await Promise.all([
+    await findUserById(userId),
+    await findOrganisationsByUserId(userId),
+  ]);
+
+  if (organisations.length === 0) {
+    return redirect('/app/create');
+  }
 
   return json({ user, organisations });
 }
@@ -19,6 +24,11 @@ export async function loader({ request }: LoaderArgs) {
 export default function () {
   const loaderData = useLoaderData<typeof loader>();
   console.log('loaderData', loaderData);
+
+  /**
+   * If user doesnt exist, programmatically destroy the session
+   * by submitting a form to "/auth/logout"
+   */
 
   return (
     <main className="grid min-h-full place-items-center bg-white py-24 px-6 sm:py-32 lg:px-8">

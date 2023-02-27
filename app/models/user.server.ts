@@ -17,13 +17,6 @@ export async function findUserById(userId: User['id']) {
     where: {
       id: userId,
     },
-    include: {
-      organisations: {
-        include: {
-          organisation: true,
-        },
-      },
-    },
   });
 }
 

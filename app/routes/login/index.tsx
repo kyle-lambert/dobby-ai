@@ -15,7 +15,7 @@ import { AuthorizationError } from 'remix-auth';
 import { commitSession } from '~/services/session.server';
 import { getSearchParams, jsonHttpResponse, setSessionUserId } from '~/utils';
 
-import { findUserById } from '~/models/user.server';
+import { findOrganisationsByUserId } from '~/models/organisation.server';
 
 const validator = withZod(
   z.object({
@@ -31,11 +31,10 @@ export async function loader({ request }: LoaderArgs) {
     return json({});
   }
 
-  const user = await findUserById(userId);
-  const hasOrganisations = user && user.organisations.length > 0;
   const redirectTo = await getSearchParams(request, 'redirectTo');
+  const organisations = await findOrganisationsByUserId(userId);
 
-  return hasOrganisations
+  return organisations.length > 0
     ? redirect(safeRedirect(redirectTo, '/app'))
     : redirect(safeRedirect(redirectTo, '/app/create'));
 }
@@ -55,11 +54,10 @@ export async function action({ request }: ActionArgs) {
       'Set-Cookie': await commitSession(session),
     };
 
-    const user = await findUserById(userId);
-    const hasOrganisations = user && user.organisations.length > 0;
+    const organisations = await findOrganisationsByUserId(userId);
     const redirectTo = await getSearchParams(request, 'redirectTo');
 
-    return hasOrganisations
+    return organisations.length > 0
       ? redirect(safeRedirect(redirectTo, '/app'), { headers })
       : redirect(safeRedirect(redirectTo, '/app/create'), { headers });
   } catch (error) {

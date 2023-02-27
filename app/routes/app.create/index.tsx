@@ -13,11 +13,11 @@ const validator = withZod(
   })
 );
 
-// export async function loader({ request }: LoaderArgs) {
-//   return await authenticator.isAuthenticated(request, {
-//     failureRedirect: `/login`,
-//   });
-// }
+export async function loader({ request }: LoaderArgs) {
+  return await authenticator.isAuthenticated(request, {
+    failureRedirect: `/login`,
+  });
+}
 
 export async function action({ request }: ActionArgs) {
   const result = await validator.validate(await request.clone().formData());
