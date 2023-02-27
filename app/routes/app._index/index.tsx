@@ -1,7 +1,6 @@
 import { Link, useLoaderData } from '@remix-run/react';
 import { json, LoaderArgs } from '@remix-run/server-runtime';
 import { findUserById } from '~/models/user.server';
-import { findOrganisationsByUserId } from '~/models/organisation.server';
 import { authenticator } from '~/services/auth.server';
 
 export async function loader({ request }: LoaderArgs) {
@@ -9,15 +8,10 @@ export async function loader({ request }: LoaderArgs) {
     failureRedirect: '/login',
   });
 
-  const [user, organisations] = await Promise.all([
-    await findUserById(userId),
-    await findOrganisationsByUserId(userId),
-  ]);
-
-  /**
-   * Still need to cover scenario when the user
-   * doesn't exist (unlikely)
-   */
+  const user = await findUserById(userId);
+  const organisations = user?.organisations
+    ? user?.organisations.map((organisation) => organisation.organisation)
+    : [];
 
   return json({ user, organisations });
 }

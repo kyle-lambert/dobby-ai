@@ -15,8 +15,11 @@ import { withZod } from '@remix-validated-form/with-zod';
 import { safeRedirect } from 'remix-utils';
 import { validationError } from 'remix-validated-form';
 import { z } from 'zod';
-import { findOrganisationsByUserId } from '~/models/organisation.server';
-import { createUser, findUserByEmail } from '~/models/user.server';
+import {
+  createUser,
+  findUserByEmail,
+  findUserById,
+} from '~/models/user.server';
 import { authenticator } from '~/services/auth.server';
 import { commitSession } from '~/services/session.server';
 import { getSearchParams, jsonHttpResponse, setSessionUserId } from '~/utils';
@@ -37,10 +40,11 @@ export async function loader({ request }: LoaderArgs) {
     return json({});
   }
 
+  const user = await findUserById(userId);
+  const hasOrganisations = user && user.organisations.length > 0;
   const redirectTo = await getSearchParams(request, 'redirectTo');
-  const organisations = await findOrganisationsByUserId(userId);
 
-  return organisations.length > 0
+  return hasOrganisations
     ? redirect(safeRedirect(redirectTo, '/app'))
     : redirect(safeRedirect(redirectTo, '/app/create'));
 }
