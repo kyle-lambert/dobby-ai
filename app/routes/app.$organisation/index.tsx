@@ -1,4 +1,4 @@
-import { Fragment, useEffect } from 'react';
+import { Fragment } from 'react';
 import { Disclosure, Menu, Transition } from '@headlessui/react';
 import {
   Form,
@@ -13,65 +13,33 @@ import clsx from 'clsx';
 import { authenticator } from '~/services/auth.server';
 
 import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { getRedirectParams } from '~/utils';
-import { prisma } from '~/db.server';
 import {
-  httpStatus,
   HttpStatusCode,
-  HttpStatusName,
-  jsonHttpError,
-} from '~/utils/errors';
-import { Request } from '@remix-run/node';
-import { Organisation, User } from '@prisma/client';
+  HttpReasonPhrase,
+  jsonHttpResponse,
+  JsonHttpResponse,
+} from '~/utils';
+import { findUserOrganisationByIds } from '~/models/user-organisation.server';
 
-// export async function authenticated(request: Request) {
-//   const searchParams = getRedirectParams(request);
-//   const userId = await authenticator.isAuthenticated(request, {
-//     failureRedirect: `/login?${searchParams}`,
-//   });
-// }
-
-export async function findUserOrganisation(
-  userId: User['id'],
-  organisationId: Organisation['id']
-) {
-  return await prisma.userOrganisation.findUnique({
-    where: {
-      userId_organisationId: {
-        userId,
-        organisationId,
-      },
-    },
-    include: {
-      user: {
-        include: {
-          organisations: {
-            include: {
-              organisation: true,
-            },
-          },
-        },
-      },
-      organisation: true,
-    },
+export async function authenticated(request: Request) {
+  return await authenticator.isAuthenticated(request, {
+    failureRedirect: '/login',
   });
 }
 
 export async function loader({ request, params }: LoaderArgs) {
-  // const searchParams = getRedirectParams(request);
-  // const userId = await authenticator.isAuthenticated(request, {
-  //   failureRedirect: `/login?${searchParams}`,
-  // });
+  const organisationId = params.organisation as string;
   const userId = await authenticator.isAuthenticated(request, {
-    failureRedirect: `/login`,
+    failureRedirect: '/login',
   });
 
-  const organisationId = params.organisation as string;
-
-  const userOrganisation = await findUserOrganisation(userId, organisationId);
+  const userOrganisation = await findUserOrganisationByIds(
+    userId,
+    organisationId
+  );
 
   if (!userOrganisation) {
-    throw jsonHttpError(403, 'User does not belong to this organisation');
+    throw jsonHttpResponse(403, 'User does not belong to this organisation');
   }
 
   return json({
@@ -87,13 +55,9 @@ const navigation = [
 const userNavigation = [{ name: 'Settings', to: './settings' }];
 
 export default function App() {
-  const data = useLoaderData<typeof loader>();
+  const loaderData = useLoaderData<typeof loader>();
 
-  useEffect(() => {
-    if (data) {
-      console.log(data);
-    }
-  }, [data]);
+  console.log('loaderData', loaderData);
 
   return (
     <div className="min-h-full">
@@ -264,34 +228,21 @@ export default function App() {
   );
 }
 
-export type CatchJsonHttpError = {
-  error: {
-    code: HttpStatusCode;
-    name: HttpStatusName;
-    message: string | null;
-  };
-};
-
 export function CatchBoundary() {
-  const { status, data } = useCatch() as ThrownResponse<
-    number,
-    CatchJsonHttpError
-  >;
-  const error = data?.error;
+  const { status, data } = useCatch<ThrownResponse<number, JsonHttpResponse>>();
+  const { reasonPhrase, message } = data.response;
 
   return (
     <main className="grid min-h-full place-items-center bg-white py-24 px-6 sm:py-32 lg:px-8">
       <div className="text-center">
         <p className="text-base font-semibold text-rose-600">{status}</p>
-        {error?.name && (
+        {reasonPhrase && (
           <h1 className="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl">
-            {error.name}
+            {reasonPhrase}
           </h1>
         )}
-        {error?.message && (
-          <p className="mt-6 text-base leading-7 text-gray-600">
-            {error.message}
-          </p>
+        {message && (
+          <p className="mt-6 text-base leading-7 text-gray-600">{message}</p>
         )}
       </div>
     </main>

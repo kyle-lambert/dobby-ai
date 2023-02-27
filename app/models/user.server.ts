@@ -1,39 +1,53 @@
-import type { User } from '@prisma/client';
-
+import { User } from '@prisma/client';
 import { prisma } from '~/db.server';
+import { hashPassword } from '~/services/auth.server';
 
-export type { User } from '@prisma/client';
+import type { With } from '~/types';
 
-export async function getUserById(id: User['id']) {
-  return prisma.user.findUnique({ where: { id } });
+export async function findUserByEmail(email: User['email']) {
+  return await prisma.user.findUnique({
+    where: {
+      email,
+    },
+  });
 }
 
-export async function getUserByEmail(email: User['email']) {
-  return prisma.user.findUnique({ where: { email } });
+export async function findUserById(userId: User['id']) {
+  return await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+    include: {
+      organisations: {
+        include: {
+          organisation: true,
+        },
+      },
+    },
+  });
 }
 
-// export async function createUser(
-//   firstName: User['firstName'],
-//   lastName: User['lastName'],
-//   email: User['email'],
-//   password: string
-// ) {
-//   const hashedPassword = await bcrypt.hash(password, 10);
+type CreateUser = With<User, 'firstName' | 'lastName' | 'email'> & {
+  password: string;
+};
 
-//   return prisma.user.create({
-//     data: {
-//       firstName,
-//       lastName,
-//       email,
-//       password: {
-//         create: {
-//           hash: hashedPassword,
-//         },
-//       },
-//     },
-//   });
-// }
-
-export async function deleteUserByEmail(email: User['email']) {
-  return prisma.user.delete({ where: { email } });
+export async function createUser({
+  firstName,
+  lastName,
+  email,
+  password,
+}: CreateUser) {
+  const hash = await hashPassword(password);
+  return await prisma.user.create({
+    data: {
+      firstName,
+      lastName,
+      email,
+      password: {
+        create: {
+          hash,
+        },
+      },
+    },
+  });
 }

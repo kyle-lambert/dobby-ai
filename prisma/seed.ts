@@ -8,7 +8,6 @@ const users = [
     firstName: 'Kyle',
     lastName: 'Lambert',
     email: 'kyle@gmail.com',
-    organisationName: 'Billy Baxters',
   },
   {
     firstName: 'Troy',
@@ -38,27 +37,42 @@ async function seed() {
 
   await Promise.all(
     users.map(async ({ firstName, lastName, email, organisationName }) => {
-      return await prisma.user.create({
-        data: {
-          firstName,
-          lastName,
-          email,
-          password: {
-            create: {
-              hash: hashedPassword,
+      if (organisationName) {
+        return await prisma.user.create({
+          data: {
+            firstName,
+            lastName,
+            email,
+            password: {
+              create: {
+                hash: hashedPassword,
+              },
             },
-          },
-          organisations: {
-            create: {
-              organisation: {
-                create: {
-                  name: organisationName,
+            organisations: {
+              create: {
+                organisation: {
+                  create: {
+                    name: organisationName,
+                  },
                 },
               },
             },
           },
-        },
-      });
+        });
+      } else {
+        return await prisma.user.create({
+          data: {
+            firstName,
+            lastName,
+            email,
+            password: {
+              create: {
+                hash: hashedPassword,
+              },
+            },
+          },
+        });
+      }
     })
   );
 }

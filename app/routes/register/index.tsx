@@ -12,16 +12,17 @@ import {
   redirect,
 } from '@remix-run/server-runtime';
 import { withZod } from '@remix-validated-form/with-zod';
+import { safeRedirect } from 'remix-utils';
 import { validationError } from 'remix-validated-form';
 import { z } from 'zod';
-import { prisma } from '~/db.server';
-import { authenticator, hashPassword } from '~/services/auth.server';
-import { commitSession, getSession } from '~/services/session.server';
-import { jsonHttpError } from '~/utils/errors';
+import { findOrganisationsByUserId } from '~/models/organisation.server';
+import { createUser, findUserByEmail } from '~/models/user.server';
+import { authenticator } from '~/services/auth.server';
+import { commitSession } from '~/services/session.server';
+import { getSearchParams, jsonHttpResponse, setSessionUserId } from '~/utils';
 
 const validator = withZod(
   z.object({
-    organisationName: z.string().min(1).trim(),
     firstName: z.string().min(1).trim(),
     lastName: z.string().min(1).trim(),
     email: z.string().email(),
@@ -30,9 +31,18 @@ const validator = withZod(
 );
 
 export async function loader({ request }: LoaderArgs) {
-  return await authenticator.isAuthenticated(request, {
-    successRedirect: '/app/tictoc',
-  });
+  const userId = await authenticator.isAuthenticated(request);
+
+  if (!userId) {
+    return json({});
+  }
+
+  const redirectTo = await getSearchParams(request, 'redirectTo');
+  const organisations = await findOrganisationsByUserId(userId);
+
+  return organisations.length > 0
+    ? redirect(safeRedirect(redirectTo, '/app'))
+    : redirect(safeRedirect(redirectTo, '/app/create'));
 }
 
 export async function action({ request }: ActionArgs) {
@@ -42,51 +52,14 @@ export async function action({ request }: ActionArgs) {
     return validationError(result.error);
   }
 
-  const { organisationName, firstName, lastName, email, password } =
-    result.data;
-
-  const userFound = await prisma.user.findUnique({
-    where: {
-      email,
-    },
-  });
-
-  if (userFound) {
-    return jsonHttpError(409, 'User already exists');
+  if (await findUserByEmail(result.data.email)) {
+    return jsonHttpResponse(409, 'User already exists');
   }
 
-  const user = await prisma.user.create({
-    data: {
-      firstName,
-      lastName,
-      email,
-      password: {
-        create: {
-          hash: await hashPassword(password),
-        },
-      },
-    },
-  });
+  const user = await createUser(result.data);
+  const session = await setSessionUserId(request, user.id);
 
-  const organisation = await prisma.organisation.create({
-    data: {
-      name: organisationName,
-      users: {
-        create: {
-          user: {
-            connect: {
-              id: user.id,
-            },
-          },
-        },
-      },
-    },
-  });
-
-  const session = await getSession(request.headers.get('Cookie'));
-  session.set(authenticator.sessionKey, user.id);
-
-  return redirect(`/app/${organisation.id}/dashboard`, {
+  return redirect(`/app/create`, {
     headers: {
       'Set-Cookie': await commitSession(session),
     },
@@ -118,22 +91,6 @@ export default function Register() {
           </p>
         </div>
         <Form className="mt-8 space-y-6" method="post">
-          <input type="hidden" name="remember" defaultValue="true" />
-          <div className="-space-y-px rounded-md shadow-sm">
-            <div>
-              <label htmlFor="organisationName" className="sr-only">
-                Organisation name
-              </label>
-              <input
-                id="organisationName"
-                name="organisationName"
-                type="text"
-                required
-                className="relative block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                placeholder="Organisation name"
-              />
-            </div>
-          </div>
           <div className="-space-y-px rounded-md shadow-sm">
             <div>
               <label htmlFor="firstName" className="sr-only">

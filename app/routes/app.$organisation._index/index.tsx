@@ -12,7 +12,7 @@ export async function loader({ request }: LoaderArgs) {
   });
 }
 
-export default function AppIndex() {
+export default function () {
   return (
     <>
       <header className="bg-white shadow">

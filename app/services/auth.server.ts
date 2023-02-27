@@ -6,9 +6,7 @@ import { compare, hash } from 'bcryptjs';
 
 import { prisma } from '~/db.server';
 import type { Password, User } from '@prisma/client';
-import { json } from '@remix-run/server-runtime';
 import { environment } from '~/environment.server';
-import { httpStatus } from '~/utils/errors';
 
 export async function hashPassword(password: string) {
   return await hash(password, 10);
@@ -18,26 +16,6 @@ export async function comparePassword(
   hash: Password['hash']
 ) {
   return await compare(password, hash);
-}
-
-export async function wrapped(authenticate: Promise<User['id']>) {
-  try {
-    return await authenticate;
-  } catch (error) {
-    /**
-     * Because redirects work by throwing a Response, we need to check
-     * if the caught error is a Response and return it.
-     */
-    if (error instanceof Response) {
-      return error;
-    }
-    if (error instanceof AuthorizationError) {
-      const message = error.message || httpStatus[403];
-      return json({ error: message }, 403);
-    }
-
-    return json({ error: httpStatus[500] }, 500);
-  }
 }
 
 export const FORM_STRATEGY = 'form-strategy';

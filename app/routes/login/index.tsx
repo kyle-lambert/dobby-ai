@@ -12,9 +12,10 @@ import {
 import { authenticator, FORM_STRATEGY } from '~/services/auth.server';
 import { validationError } from 'remix-validated-form';
 import { AuthorizationError } from 'remix-auth';
-import { commitSession, getSession } from '~/services/session.server';
-import { prisma } from '~/db.server';
-import { httpStatus, HttpStatusCode, jsonHttpError } from '~/utils/errors';
+import { commitSession } from '~/services/session.server';
+import { getSearchParams, jsonHttpResponse, setSessionUserId } from '~/utils';
+
+import { findOrganisationsByUserId } from '~/models/organisation.server';
 
 const validator = withZod(
   z.object({
@@ -24,32 +25,18 @@ const validator = withZod(
 );
 
 export async function loader({ request }: LoaderArgs) {
-  const redirectTo = new URL(request.url).searchParams.get('redirectTo');
-
   const userId = await authenticator.isAuthenticated(request);
 
-  if (userId) {
-    const organisations = await prisma.organisation.findMany({
-      where: {
-        users: {
-          every: {
-            userId,
-          },
-        },
-      },
-    });
-
-    if (organisations.length > 0) {
-      const organisation = organisations[0];
-      return redirect(
-        safeRedirect(redirectTo, `/app/${organisation.id}/dashboard`)
-      );
-    }
-
-    return redirect(safeRedirect(redirectTo, '/app/create'));
+  if (!userId) {
+    return json({});
   }
 
-  return json({});
+  const redirectTo = await getSearchParams(request, 'redirectTo');
+  const organisations = await findOrganisationsByUserId(userId);
+
+  return organisations.length > 0
+    ? redirect(safeRedirect(redirectTo, '/app'))
+    : redirect(safeRedirect(redirectTo, '/app/create'));
 }
 
 export async function action({ request }: ActionArgs) {
@@ -59,42 +46,20 @@ export async function action({ request }: ActionArgs) {
     return validationError(result.error);
   }
 
-  const redirectTo = new URL(request.url).searchParams.get('redirectTo');
-
   try {
-    const userId = await authenticator.authenticate(FORM_STRATEGY, request, {});
-
-    const session = await getSession(request.headers.get('Cookie'));
-    session.set(authenticator.sessionKey, userId);
-
-    const user = await prisma.user.findUnique({
-      where: {
-        id: userId,
-      },
-      include: {
-        organisations: {
-          include: {
-            organisation: true,
-          },
-        },
-      },
-    });
+    const userId = await authenticator.authenticate(FORM_STRATEGY, request);
+    const session = await setSessionUserId(request, userId);
 
     const headers = {
       'Set-Cookie': await commitSession(session),
     };
 
-    if (user?.organisations && user.organisations.length > 0) {
-      const organisationId = user.organisations[0].organisationId;
-      return redirect(
-        safeRedirect(redirectTo, `/app/${organisationId}/dashboard`),
-        { headers }
-      );
-    }
+    const organisations = await findOrganisationsByUserId(userId);
+    const redirectTo = await getSearchParams(request, 'redirectTo');
 
-    return redirect(safeRedirect(redirectTo, '/app/create'), {
-      headers,
-    });
+    return organisations.length > 0
+      ? redirect(safeRedirect(redirectTo, '/app'), { headers })
+      : redirect(safeRedirect(redirectTo, '/app/create'), { headers });
   } catch (error) {
     if (error instanceof Response) {
       return error;
@@ -102,17 +67,17 @@ export async function action({ request }: ActionArgs) {
     if (error instanceof AuthorizationError) {
       switch (error.message) {
         case '401': {
-          return jsonHttpError(401, 'Invalid credentials');
+          return jsonHttpResponse(401, 'Invalid credentials');
         }
         case '404': {
-          return jsonHttpError(404, 'User not found');
+          return jsonHttpResponse(404, 'User not found');
         }
         default: {
-          return jsonHttpError(401, 'Authorisation error');
+          return jsonHttpResponse(401, 'Authorisation error');
         }
       }
     }
-    return jsonHttpError(500);
+    return jsonHttpResponse(500);
   }
 }
 
