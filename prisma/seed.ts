@@ -8,24 +8,33 @@ const users = [
     firstName: 'Kyle',
     lastName: 'Lambert',
     email: 'kyle@gmail.com',
+    organisation: {
+      name: 'Organisation 1',
+    },
   },
   {
     firstName: 'Troy',
     lastName: 'Lambert',
     email: 'troy@gmail.com',
-    organisationName: 'Grange Golf Club',
+    organisation: {
+      name: 'Organisation 2',
+    },
   },
   {
     firstName: 'George',
     lastName: 'Magnisalis',
     email: 'george@gmail.com',
-    organisationName: 'Cafe Primo',
+    organisation: {
+      name: 'Organisation 3',
+    },
   },
   {
     firstName: 'Jay',
     lastName: 'Donjerkovic',
     email: 'jay@gmail.com',
-    organisationName: 'EZY Electrical',
+    organisation: {
+      name: 'Organisation 4',
+    },
   },
 ];
 
@@ -36,43 +45,28 @@ async function seed() {
   const hashedPassword = await bcrypt.hash('test', 10);
 
   await Promise.all(
-    users.map(async ({ firstName, lastName, email, organisationName }) => {
-      if (organisationName) {
-        return await prisma.user.create({
-          data: {
-            firstName,
-            lastName,
-            email,
-            password: {
-              create: {
-                hash: hashedPassword,
-              },
+    users.map(async ({ firstName, lastName, email, organisation }) => {
+      return await prisma.user.create({
+        data: {
+          firstName,
+          lastName,
+          email,
+          password: {
+            create: {
+              hash: hashedPassword,
             },
-            organisations: {
-              create: {
-                organisation: {
-                  create: {
-                    name: organisationName,
-                  },
+          },
+          organisations: {
+            create: {
+              organisation: {
+                create: {
+                  name: organisation.name,
                 },
               },
             },
           },
-        });
-      } else {
-        return await prisma.user.create({
-          data: {
-            firstName,
-            lastName,
-            email,
-            password: {
-              create: {
-                hash: hashedPassword,
-              },
-            },
-          },
-        });
-      }
+        },
+      });
     })
   );
 }

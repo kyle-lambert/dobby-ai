@@ -1,0 +1,47 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table User {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  email String [unique, not null]
+  firstName String [not null]
+  lastName String [not null]
+  password Password
+  organisations UserOrganisation [not null]
+}
+
+Table Password {
+  hash String [not null]
+  userId String [unique, not null]
+  user User [not null]
+}
+
+Table UserOrganisation {
+  createdAt DateTime [default: `now()`, not null]
+  userId String [not null]
+  user User [not null]
+  organisationId String [not null]
+  organisation Organisation [not null]
+
+  indexes {
+    (userId, organisationId) [pk]
+    (userId, organisationId) [unique]
+  }
+}
+
+Table Organisation {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  name String [not null]
+  users UserOrganisation [not null]
+}
+
+Ref: Password.userId - User.id [delete: Cascade]
+
+Ref: UserOrganisation.userId > User.id [delete: Cascade]
+
+Ref: UserOrganisation.organisationId > Organisation.id [delete: Cascade]
