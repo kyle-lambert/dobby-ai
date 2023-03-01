@@ -2,12 +2,7 @@ import { Form, Link, useActionData, useLoaderData } from '@remix-run/react';
 import { z } from 'zod';
 import { withZod } from '@remix-validated-form/with-zod';
 import { safeRedirect } from 'remix-utils';
-import {
-  LoaderArgs,
-  ActionArgs,
-  json,
-  redirect,
-} from '@remix-run/server-runtime';
+import { LoaderArgs, ActionArgs, json, redirect } from '@remix-run/server-runtime';
 
 import { authenticator, FORM_STRATEGY } from '~/services/auth.server';
 import { validationError } from 'remix-validated-form';
@@ -97,10 +92,7 @@ export default function Login() {
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Don't have an account?{' '}
-            <Link
-              to="/register"
-              className="font-medium text-indigo-600 hover:text-indigo-500"
-            >
+            <Link to="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
               Create one here
             </Link>
           </p>

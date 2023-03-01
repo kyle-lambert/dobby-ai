@@ -1,16 +1,5 @@
-import {
-  Form,
-  Link,
-  useActionData,
-  useCatch,
-  useLoaderData,
-} from '@remix-run/react';
-import {
-  ActionArgs,
-  json,
-  LoaderArgs,
-  redirect,
-} from '@remix-run/server-runtime';
+import { Form, Link, useActionData, useCatch, useLoaderData } from '@remix-run/react';
+import { ActionArgs, json, LoaderArgs, redirect } from '@remix-run/server-runtime';
 import { withZod } from '@remix-validated-form/with-zod';
 import { safeRedirect } from 'remix-utils';
 import { validationError } from 'remix-validated-form';
@@ -82,10 +71,7 @@ export default function Register() {
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Already registered?{' '}
-            <Link
-              to="/login"
-              className="font-medium text-indigo-600 hover:text-indigo-500"
-            >
+            <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
               Sign in here
             </Link>
           </p>

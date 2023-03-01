@@ -1,13 +1,6 @@
 import { Fragment } from 'react';
 import { Disclosure, Menu, Transition } from '@headlessui/react';
-import {
-  Form,
-  Link,
-  Outlet,
-  ThrownResponse,
-  useCatch,
-  useLoaderData,
-} from '@remix-run/react';
+import { Form, Link, Outlet, ThrownResponse, useCatch, useLoaderData } from '@remix-run/react';
 import { json, LoaderArgs } from '@remix-run/server-runtime';
 import clsx from 'clsx';
 import { authenticator } from '~/services/auth.server';
@@ -35,10 +28,7 @@ export async function loader({ request, params }: LoaderArgs) {
     failureRedirect: '/login',
   });
 
-  const userOrganisation = await findUserOrganisationByIds(
-    userId,
-    organisationId
-  );
+  const userOrganisation = await findUserOrganisationByIds(userId, organisationId);
 
   if (!userOrganisation) {
     throw jsonHttpResponse(403, 'User does not belong to this organisation');
@@ -185,12 +175,8 @@ export default function App() {
               <div className="border-t border-gray-700 pt-4 pb-3">
                 <div className="flex items-center px-5">
                   <div>
-                    <div className="text-base font-medium leading-none text-white">
-                      Bob
-                    </div>
-                    <div className="text-sm font-medium leading-none text-gray-400">
-                      Joans
-                    </div>
+                    <div className="text-base font-medium leading-none text-white">Bob</div>
+                    <div className="text-sm font-medium leading-none text-gray-400">Joans</div>
                   </div>
                   <button
                     type="button"
@@ -243,9 +229,7 @@ export function CatchBoundary() {
             {reasonPhrase}
           </h1>
         )}
-        {message && (
-          <p className="mt-6 text-base leading-7 text-gray-600">{message}</p>
-        )}
+        {message && <p className="mt-6 text-base leading-7 text-gray-600">{message}</p>}
       </div>
     </main>
   );

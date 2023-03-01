@@ -11,10 +11,7 @@ import { environment } from '~/environment.server';
 export async function hashPassword(password: string) {
   return await hash(password, 10);
 }
-export async function comparePassword(
-  password: string,
-  hash: Password['hash']
-) {
+export async function comparePassword(password: string, hash: Password['hash']) {
   return await compare(password, hash);
 }
 
@@ -40,10 +37,7 @@ const formStrategy = new FormStrategy(async ({ form }) => {
     throw new AuthorizationError('404');
   }
 
-  const isValid = await comparePassword(
-    password,
-    userWithPassword.password.hash
-  );
+  const isValid = await comparePassword(password, userWithPassword.password.hash);
 
   if (!isValid) {
     throw new AuthorizationError('401');

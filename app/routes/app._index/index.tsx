@@ -45,10 +45,7 @@ export default function () {
               key={organisation.id}
               className="mt-4 overflow-hidden rounded-lg border border-gray-300 text-left"
             >
-              <Link
-                to={`./${organisation.id}`}
-                className="block px-4 py-3 hover:bg-purple-50"
-              >
+              <Link to={`./${organisation.id}`} className="block px-4 py-3 hover:bg-purple-50">
                 <div>
                   <h3 className="text-base font-semibold leading-7 tracking-tight text-gray-900">
                     {organisation.name}

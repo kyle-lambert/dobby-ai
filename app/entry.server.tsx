@@ -13,9 +13,7 @@ export default function handleRequest(
   responseHeaders: Headers,
   remixContext: EntryContext
 ) {
-  const callbackName = isbot(request.headers.get('user-agent'))
-    ? 'onAllReady'
-    : 'onShellReady';
+  const callbackName = isbot(request.headers.get('user-agent')) ? 'onAllReady' : 'onShellReady';
 
   return new Promise((resolve, reject) => {
     let didError = false;

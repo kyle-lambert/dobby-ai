@@ -24,12 +24,7 @@ type CreateUser = With<User, 'firstName' | 'lastName' | 'email'> & {
   password: string;
 };
 
-export async function createUser({
-  firstName,
-  lastName,
-  email,
-  password,
-}: CreateUser) {
+export async function createUser({ firstName, lastName, email, password }: CreateUser) {
   const hash = await hashPassword(password);
   return await prisma.user.create({
     data: {
