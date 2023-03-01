@@ -12,16 +12,14 @@ export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white">
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="-mb-px flex h-16 items-center justify-between">
-          {/* Header: Left side */}
           <div className="flex">
-            {/* Hamburger button */}
             <button
               className="text-slate-500 hover:text-slate-600 lg:hidden"
               aria-controls="sidebar"
               aria-expanded={sidebarOpen}
               onClick={(e) => {
                 e.stopPropagation();
-                setSidebarOpen(!sidebarOpen);
+                setSidebarOpen((prev) => !prev);
               }}
             >
               <span className="sr-only">Open sidebar</span>
@@ -37,7 +35,6 @@ export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
             </button>
           </div>
 
-          {/* Header: Right side */}
           <div className="flex items-center">
             <button
               className={`ml-3 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 transition duration-150 hover:bg-slate-200 ${
