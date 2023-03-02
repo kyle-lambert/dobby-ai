@@ -52,4 +52,17 @@ model Organisation {
 
   name  String
   users UserOrganisation[]
+
+  slug               OrganisationSlug @relation(fields: [organisationSlugId], references: [id])
+  organisationSlugId String           @unique
+}
+
+model OrganisationSlug {
+  id   String @id @default(cuid())
+  name String
+
+  organisationId String
+  organisation   Organisation?
+
+  @@unique([name, organisationId])
 }
